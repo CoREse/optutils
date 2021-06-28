@@ -3,14 +3,15 @@
 #include <getopt.h>
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 using namespace std;
 
-OptEntry::OptEntry(char short_opt, const char * long_opt, int need_arg, const char * arg_name, const char * help_description, char data_type, void * data)//data should be allocated pointer with correct data type
-    :ShortOpt(short_opt),LongOpt(long_opt),NeedArg(need_arg),ArgName(arg_name),HelpDescription(help_description),DataType(data_type),Data(data),DefaultData(Data){}
+OptEntry::OptEntry(char short_opt, const char * long_opt, int need_arg, const char * arg_name, const char * help_description, char data_type, void * data, bool multi)//data should be allocated pointer with correct data type
+    :ShortOpt(short_opt),LongOpt(long_opt),NeedArg(need_arg),ArgName(arg_name),HelpDescription(help_description),DataType(data_type),Data(data),DefaultData(Data), Multi(multi){}
 
-void OptHelper::addOpt(char short_opt, const char * long_opt, int need_arg, const char * arg_name, const char * help_description, char data_type, void * data)//data should be allocated pointer with correct data type
+void OptHelper::addOpt(char short_opt, const char * long_opt, int need_arg, const char * arg_name, const char * help_description, char data_type, void * data, bool multi)//data should be allocated pointer with correct data type
 {
-    Opts.push_back(OptEntry(short_opt, long_opt, need_arg, arg_name, help_description, data_type, data));
+    Opts.push_back(OptEntry(short_opt, long_opt, need_arg, arg_name, help_description, data_type, data, multi));
 }
 
 char * get_short_opts(const vector<OptEntry> &options)
@@ -94,27 +95,65 @@ int OptHelper::getOpts(int argc, const char ** argv)
         assert(Index>=0);
         if (optarg==0)//no arg
         {
-            if (Opts[Index].DataType=='b')
+            if (Opts[Index].DataType=='b' && Opts[Index].Multi==false)
             {
                 *(bool*)Opts[Index].Data=!(*(bool*)Opts[Index].Data);
+            }
+            else
+            {
+                char * OptName=(char *)malloc(Opts[Index].LongOpt!=NULL?strlen(Opts[Index].LongOpt)+10:10);
+                if (Opts[Index].ShortOpt!=0)
+                {
+                    OptName[0]='-';
+                    OptName[1]=Opts[Index].ShortOpt;
+                    OptName[2]='\0';
+                }
+                if (Opts[Index].LongOpt!=NULL)
+                {
+                    strcat(OptName," --");
+                    strcat(OptName,Opts[Index].LongOpt);
+                }
+                fprintf(stderr, "[WARN] Parsing %s with no arg!\n",OptName);
+                free(OptName);
             }
         }
         else
         {
-            switch (Opts[Index].DataType)
+            if (Opts[Index].Multi)
             {
-                case 'i':
-                *(int*)Opts[Index].Data=atoi(optarg);
-                break;
-                case 'F':
-                *(double*)Opts[Index].Data=atof(optarg);
-                break;
-                case 'b':
-                *(bool*)Opts[Index].Data=atoi(optarg);
-                break;
-                case 's':
-                *(const char**)Opts[Index].Data=optarg;
-                break;
+                switch (Opts[Index].DataType)
+                {
+                    case 'i':
+                    ((vector<int> *)(Opts[Index].Data))->push_back(atoi(optarg));
+                    break;
+                    case 'F':
+                    ((vector<double> *)(Opts[Index].Data))->push_back(atof(optarg));
+                    break;
+                    case 'b':
+                    ((vector<bool>*)(Opts[Index].Data))->push_back(atoi(optarg));
+                    break;
+                    case 's':
+                    *(const char**)Opts[Index].Data=optarg;
+                    break;
+                }
+            }
+            else
+            {
+                switch (Opts[Index].DataType)
+                {
+                    case 'i':
+                    *(int*)Opts[Index].Data=atoi(optarg);
+                    break;
+                    case 'F':
+                    *(double*)Opts[Index].Data=atof(optarg);
+                    break;
+                    case 'b':
+                    *(bool*)Opts[Index].Data=atoi(optarg);
+                    break;
+                    case 's':
+                    *(const char**)Opts[Index].Data=optarg;
+                    break;
+                }
             }
         }
     }

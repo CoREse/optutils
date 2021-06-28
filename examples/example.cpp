@@ -11,7 +11,7 @@ int main(int argc, const char ** argv)
     OH.addOpt('c', "cc", 1, 0, "1234556",'i',&arg);
     OH.addOpt('d', "double", 1, 0, "double",'F',&argd);
     OH.addOpt('b', 0, 2, "bool", "bool arg",'b',&argb);
-    OH.addOpt('s', "string", 1, 0, "string arg",'s',&args);
+    OH.addOpt('s', "string", 2, 0, "string arg",'s',&args);
     for (int i=0;i<argc;++i) printf("%s ",argv[i]);
     printf("\n");
     OH.getOpts(argc,argv);
