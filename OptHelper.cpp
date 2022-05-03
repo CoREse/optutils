@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <string>
 using namespace std;
 
 OptEntry::OptEntry(char short_opt, const char * long_opt, int need_arg, const char * arg_name, const char * help_description, char data_type, void * data, bool multi)//data should be allocated pointer with correct data type
@@ -133,7 +134,11 @@ int OptHelper::getOpts(int argc, const char ** argv)
                     ((vector<bool>*)(Opts[Index].Data))->push_back(atoi(optarg));
                     break;
                     case 's':
-                    *(const char**)Opts[Index].Data=optarg;
+                    ((vector<const char *>*)(Opts[Index].Data))->push_back(optarg);
+                    //*(const char**)Opts[Index].Data=optarg;
+                    break;
+                    case 'S':
+                    ((vector<string>*)(Opts[Index].Data))->push_back(optarg);
                     break;
                 }
             }
@@ -142,16 +147,19 @@ int OptHelper::getOpts(int argc, const char ** argv)
                 switch (Opts[Index].DataType)
                 {
                     case 'i':
-                    *(int*)Opts[Index].Data=atoi(optarg);
+                    *(int*)(Opts[Index].Data)=atoi(optarg);
                     break;
                     case 'F':
-                    *(double*)Opts[Index].Data=atof(optarg);
+                    *(double*)(Opts[Index].Data)=atof(optarg);
                     break;
                     case 'b':
-                    *(bool*)Opts[Index].Data=atoi(optarg);
+                    *(bool*)(Opts[Index].Data)=atoi(optarg);
                     break;
                     case 's':
-                    *(const char**)Opts[Index].Data=optarg;
+                    *(const char**)(Opts[Index].Data)=optarg;
+                    break;
+                    case 'S':
+                    *(string*)(Opts[Index].Data)=optarg;
                     break;
                 }
             }
